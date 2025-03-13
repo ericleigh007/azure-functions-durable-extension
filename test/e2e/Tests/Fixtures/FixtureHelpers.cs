@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
@@ -98,6 +98,14 @@ public static class FixtureHelpers
                 funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__storageProvider__type"] = "mssql";
                 funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__storageProvider__connectionStringName"] = "SQLDB_Connection";
                 funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__storageProvider__createDatabaseIfNotExists"] = "true";
+                return;
+            case "azuremanaged":
+                funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__logging__logLevel__default"] = "Debug";
+                funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__logging__logLevel__Host.Startup"] = "Debug";
+                funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__hubName"] = "default";
+                funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__storageProvider__type"] = "azureManaged";
+                funcProcess.StartInfo.EnvironmentVariables["AzureFunctionsJobHost__extensions__durableTask__storageProvider__connectionStringName"] = "DURABLE_TASK_SCHEDULER_CONNECTION_STRING";
+                funcProcess.StartInfo.EnvironmentVariables["DURABLE_TASK_SCHEDULER_CONNECTION_STRING"] = $"Endpoint=http://localhost:8080;Authentication=None";
                 return;
             default:
                 testLogger.LogWarning("Environment variable E2E_TEST_DURABLE_BACKEND not set, tests configured for Azure Storage");
