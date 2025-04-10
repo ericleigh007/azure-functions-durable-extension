@@ -242,6 +242,13 @@ namespace Microsoft.Azure.WebJobs.Extensions.DurableTask
         /// </summary>
         public AppLeaseOptions AppLeaseOptions { get; set; } = AppLeaseOptions.DefaultOptions;
 
+        /// <summary>
+        /// Option to control the receive message size in bytes of the gRPC client, which is used by Durable Funsiont C# Isolated and Java.
+        /// Defaults to 4,194,304 (4 MB).
+        /// The maximum allowable value is <see cref="int.MaxValue"/>, which corresponds to the durable grpc server's receive limit.
+        /// </summary>
+        public int MaxGrpcMessageSizeInBytes { get; set; } = 4194304;
+
         // Used for mocking the lifecycle notification helper.
         internal HttpMessageHandler NotificationHandler { get; set; }
 
