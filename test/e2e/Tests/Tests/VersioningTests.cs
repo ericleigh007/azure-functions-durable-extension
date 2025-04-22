@@ -1,0 +1,59 @@
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using System;
+using System.Net;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace Microsoft.Azure.Durable.Tests.DotnetIsolatedE2E;
+
+[Collection(Constants.FunctionAppCollectionName)]
+public class VersioningTests
+{
+    private readonly FunctionAppFixture _fixture;
+    private readonly ITestOutputHelper _output;
+
+    public VersioningTests(FunctionAppFixture fixture, ITestOutputHelper testOutputHelper)
+    {
+        _fixture = fixture;
+        _fixture.TestLogs.UseTestLogger(testOutputHelper);
+        _output = testOutputHelper;
+    }
+
+    [Theory]
+    [InlineData("")] // Represents a non-versioned case.
+    [InlineData("1.0")]
+    [InlineData("2.0")]
+    public async Task TestVersionedOrchestration_OKWithMatchingVersion(string version)
+    {
+        using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationVersion_HttpStart", $"?version={version}");
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        string statusQueryGetUri = await DurableHelpers.ParseStatusQueryGetUriAsync(response);
+
+        await DurableHelpers.WaitForOrchestrationStateAsync(statusQueryGetUri, "Completed", 30);
+
+        var orchestrationDetails = await DurableHelpers.GetRunningOrchestrationDetailsAsync(statusQueryGetUri);
+        if (!string.IsNullOrEmpty(version))
+        {
+            Assert.Contains($"Version: {version}", orchestrationDetails.Output);
+        }
+        else
+        {
+            // The default version (2.0) from the host.json file should've been used here.
+            Assert.Contains("Version: 2.0", orchestrationDetails.Output);
+        }
+    }
+
+    [Fact]
+    public async Task TestVersionedOrchestration_FailsWithNonMatchingVersion()
+    {
+        using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationVersion_HttpStart", $"?version=3.0");
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        string statusQueryGetUri = await DurableHelpers.ParseStatusQueryGetUriAsync(response);
+
+        await DurableHelpers.WaitForOrchestrationStateAsync(statusQueryGetUri, "Failed", 30);
+    }
+}

@@ -50,15 +50,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="**/*.proto" GrpcServices="Both" Access="Internal"  />
+    <Protobuf Include="**/*.proto" GrpcServices="Both" Access="Internal" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Azure.WebJobs" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Rpc" />
-    <PackageReference Include="Microsoft.Azure.DurableTask.Core" />
-    <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />
+    <!--<PackageReference Include="Microsoft.Azure.DurableTask.Core" />-->
+    <!--<PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />-->
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask.Analyzers" />
     <PackageReference Include="Microsoft.Extensions.Azure" />
     <PackageReference Include="Microsoft.Extensions.Http" />
@@ -89,6 +89,10 @@
       <Pack>true</Pack>
       <PackagePath>content/SBOM</PackagePath>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\durabletask\src\DurableTask.Core\DurableTask.Core.csproj" />
+    <ProjectReference Include="..\..\..\durabletask\src\DurableTask.AzureStorage\DurableTask.AzureStorage.csproj" />
   </ItemGroup>
 
 </Project>

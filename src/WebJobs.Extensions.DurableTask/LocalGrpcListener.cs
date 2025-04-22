@@ -225,7 +225,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DurableTask
                     ExecutionStartedEvent executionStartedEvent = new ExecutionStartedEvent(-1, request.Input)
                     {
                         Name = request.Name,
-                        Version = request.Version,
+                        Version = !string.IsNullOrEmpty(request.Version) ? request.Version : this.extension.Options.DefaultVersion,
                         OrchestrationInstance = instance,
                         ScheduledStartTime = request.ScheduledStartTimestamp?.ToDateTime(),
                     };
@@ -237,7 +237,6 @@ namespace Microsoft.Azure.WebJobs.Extensions.DurableTask
                     // Create a new activity with the parent context
                     ActivityContext.TryParse(traceParent, traceState, out ActivityContext parentActivityContext);
                     using Activity? scheduleOrchestrationActivity = TraceHelper.StartActivityForNewOrchestration(executionStartedEvent, parentActivityContext, request.RequestTime?.ToDateTimeOffset());
-
                     // Schedule the orchestration
                     await this.GetDurabilityProvider(context).CreateTaskOrchestrationAsync(
                         new TaskMessage

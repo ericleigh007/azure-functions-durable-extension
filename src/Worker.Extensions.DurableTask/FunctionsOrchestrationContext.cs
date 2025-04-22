@@ -48,6 +48,8 @@ internal sealed partial class FunctionsOrchestrationContext : TaskOrchestrationC
 
     public override ParentOrchestrationInstance? Parent => this.innerContext.Parent;
 
+    public override string Version => this.innerContext.Version;
+
     protected override ILoggerFactory LoggerFactory { get; }
 
     public override TaskOrchestrationEntityFeature Entities =>
