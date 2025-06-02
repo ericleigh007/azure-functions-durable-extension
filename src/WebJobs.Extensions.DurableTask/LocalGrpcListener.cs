@@ -225,7 +225,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DurableTask
                     ExecutionStartedEvent executionStartedEvent = new ExecutionStartedEvent(-1, request.Input)
                     {
                         Name = request.Name,
-                        Version = !string.IsNullOrEmpty(request.Version) ? request.Version : this.extension.Options.DefaultVersion,
+                        Version = request.Version != null ? request.Version : this.extension.Options.DefaultVersion,
                         OrchestrationInstance = instance,
                         ScheduledStartTime = request.ScheduledStartTimestamp?.ToDateTime(),
                     };

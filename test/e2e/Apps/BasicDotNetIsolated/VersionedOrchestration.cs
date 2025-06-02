@@ -16,8 +16,40 @@ public static class VersionedOrchestration
     public static async Task<string> RunOrchestrator(
         [OrchestrationTrigger] TaskOrchestrationContext context)
     {
-        ILogger logger = context.CreateReplaySafeLogger(nameof(HelloCities));
-        logger.LogInformation($"Versioned orchestration! Version: {context.Version}");
+        ILogger logger = context.CreateReplaySafeLogger(nameof(VersionedOrchestration));
+        logger.LogInformation($"Versioned orchestration! Version: '{context.Version}'");
+
+        return await context.CallActivityAsync<string>(nameof(SayVersion), context.Version);
+    }
+
+    [Function(nameof(RunWithSubOrchestrator))]
+    public static async Task<string> RunWithSubOrchestrator(
+        [OrchestrationTrigger] TaskOrchestrationContext context,
+        string? subVersion)
+    {
+        ILogger logger = context.CreateReplaySafeLogger(nameof(VersionedOrchestration));
+        logger.LogInformation($"Versioned orchestration! Version: '{context.Version}' Sub Version: '{subVersion}'");
+
+        string subOrchestrationResponse;
+        if (subVersion == null)
+        {
+            subOrchestrationResponse = await context.CallSubOrchestratorAsync<string>(nameof(VersionedSubOrchestration));
+        }
+        else
+        {
+            subOrchestrationResponse = await context.CallSubOrchestratorAsync<string>(nameof(VersionedSubOrchestration), new SubOrchestrationOptions
+            {
+                Version = subVersion,
+            });
+        }
+        return $"Parent Version: '{context.Version}' | Sub {subOrchestrationResponse}";
+    }
+
+    [Function(nameof(VersionedSubOrchestration))]
+    public static async Task<string> VersionedSubOrchestration([OrchestrationTrigger] TaskOrchestrationContext context)
+    {
+        ILogger logger = context.CreateReplaySafeLogger(nameof(VersionedOrchestration));
+        logger.LogInformation($"Versioned sub-orchestration! Version: '{context.Version}'");
 
         return await context.CallActivityAsync<string>(nameof(SayVersion), context.Version);
     }
@@ -27,7 +59,7 @@ public static class VersionedOrchestration
     {
         ILogger logger = executionContext.GetLogger("SayVersion");
         logger.LogInformation("Activity running with version: {name}.", version);
-        return $"Version: {version}";
+        return $"Version: '{version}'";
     }
 
     [Function("OrchestrationVersion_HttpStart")]
@@ -35,19 +67,49 @@ public static class VersionedOrchestration
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext,
-        string version)
+        string? version)
     {
         ILogger logger = executionContext.GetLogger("VersionedOrchestration_HttpStart");
 
         // Function input comes from the request content.
         string instanceId;
-        if (!string.IsNullOrEmpty(version))
+        if (version != null)
         {
-            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(new TaskName(nameof(VersionedOrchestration), version));
+            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(VersionedOrchestration), new StartOrchestrationOptions
+            {
+                Version = version,
+            });
         }
         else
         {
             instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(VersionedOrchestration));
+        }
+
+        logger.LogInformation("Started orchestration with ID = '{instanceId}' and Version = '{version}'.", instanceId, version);
+
+        // Returns an HTTP 202 response with an instance management payload.
+        // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
+        return await client.CreateCheckStatusResponseAsync(req, instanceId);
+    }
+
+    [Function("OrchestrationSubVersion_HttpStart")]
+    public static async Task<HttpResponseData> HttpSubStart(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
+        [DurableClient] DurableTaskClient client,
+        FunctionContext executionContext,
+        string? version)
+    {
+        ILogger logger = executionContext.GetLogger("OrchestrationSubVersion_HttpStart");
+
+        // Function input comes from the request content.
+        string instanceId;
+        if (version != null)
+        {
+            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(RunWithSubOrchestrator), input: version);
+        }
+        else
+        {
+            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(RunWithSubOrchestrator));
         }
 
         logger.LogInformation("Started orchestration with ID = '{instanceId}' and Version = '{version}'.", instanceId, version);

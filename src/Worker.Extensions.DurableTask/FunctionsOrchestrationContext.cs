@@ -89,6 +89,31 @@ internal sealed partial class FunctionsOrchestrationContext : TaskOrchestrationC
         TaskName orchestratorName, object? input = null, TaskOptions? options = null)
     {
         this.EnsureLegalAccess();
+        // If we have a default version, add it to the TaskOptions and call the inner context with it.
+        if (this.innerContext.Properties.TryGetValue("defaultVersion", out var propVersion) && propVersion is string defaultVersion)
+        {
+            SubOrchestrationOptions subOptions;
+            if (options is SubOrchestrationOptions subOrchestrationOptions)
+            {
+                subOptions = new SubOrchestrationOptions
+                {
+                    InstanceId = subOrchestrationOptions.InstanceId,
+                    Retry = subOrchestrationOptions.Retry,
+                    Version = subOrchestrationOptions.Version?.Version ?? defaultVersion,
+                };
+            }
+            else
+            {
+                subOptions = new SubOrchestrationOptions
+                {
+                    InstanceId = null, // No instance ID specified, so we use the default one.
+                    Retry = options?.Retry,
+                    Version = defaultVersion
+                };
+            }
+            return this.innerContext.CallSubOrchestratorAsync<TResult>(orchestratorName, input, subOptions);
+        }
+
         return this.innerContext.CallSubOrchestratorAsync<TResult>(orchestratorName, input, options);
     }
 

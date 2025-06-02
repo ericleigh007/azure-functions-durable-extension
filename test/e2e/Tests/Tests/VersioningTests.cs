@@ -22,12 +22,14 @@ public class VersioningTests
     }
 
     [Theory]
-    [InlineData("")] // Represents a non-versioned case.
+    [InlineData(null)] // Represents a non-versioned case.
+    [InlineData("")] // Non-versioned/empty-versioned case.
     [InlineData("1.0")]
     [InlineData("2.0")]
-    public async Task TestVersionedOrchestration_OKWithMatchingVersion(string version)
+    public async Task TestVersionedOrchestration_OKWithMatchingVersion(string? version)
     {
-        using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationVersion_HttpStart", $"?version={version}");
+        string queryString = version == null ? string.Empty : $"?version={version}";
+        using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationVersion_HttpStart", queryString);
 
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         string statusQueryGetUri = await DurableHelpers.ParseStatusQueryGetUriAsync(response);
@@ -35,14 +37,41 @@ public class VersioningTests
         await DurableHelpers.WaitForOrchestrationStateAsync(statusQueryGetUri, "Completed", 30);
 
         var orchestrationDetails = await DurableHelpers.GetRunningOrchestrationDetailsAsync(statusQueryGetUri);
-        if (!string.IsNullOrEmpty(version))
+        if (version != null)
         {
-            Assert.Contains($"Version: {version}", orchestrationDetails.Output);
+            Assert.Equal($"Version: '{version}'", orchestrationDetails.Output);
         }
         else
         {
             // The default version (2.0) from the host.json file should've been used here.
-            Assert.Contains("Version: 2.0", orchestrationDetails.Output);
+            Assert.Equal("Version: '2.0'", orchestrationDetails.Output);
+        }
+    }
+
+    [Theory]
+    [InlineData(null)] // Represents a non-versioned case.
+    [InlineData("")] // Non-versioned/empty-versioned case.
+    [InlineData("1.0")]
+    [InlineData("2.0")]
+    public async Task TestVersionedSubOrchestration_OKWithMatchingVersion(string? version)
+    {
+        string queryString = version == null ? string.Empty : $"?version={version}";
+        using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationSubVersion_HttpStart", queryString);
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        string statusQueryGetUri = await DurableHelpers.ParseStatusQueryGetUriAsync(response);
+
+        await DurableHelpers.WaitForOrchestrationStateAsync(statusQueryGetUri, "Completed", 30);
+
+        var orchestrationDetails = await DurableHelpers.GetRunningOrchestrationDetailsAsync(statusQueryGetUri);
+        if (version != null)
+        {
+            Assert.Equal($"Parent Version: '2.0' | Sub Version: '{version}'", orchestrationDetails.Output);
+        }
+        else
+        {
+            // The default version (2.0) from the host.json file should've been used here.
+            Assert.Equal("Parent Version: '2.0' | Sub Version: '2.0'", orchestrationDetails.Output);
         }
     }
 
