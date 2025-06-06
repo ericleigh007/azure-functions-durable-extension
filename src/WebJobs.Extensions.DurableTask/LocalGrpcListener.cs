@@ -237,6 +237,7 @@ namespace Microsoft.Azure.WebJobs.Extensions.DurableTask
                     // Create a new activity with the parent context
                     ActivityContext.TryParse(traceParent, traceState, out ActivityContext parentActivityContext);
                     using Activity? scheduleOrchestrationActivity = TraceHelper.StartActivityForNewOrchestration(executionStartedEvent, parentActivityContext, request.RequestTime?.ToDateTimeOffset());
+
                     // Schedule the orchestration
                     await this.GetDurabilityProvider(context).CreateTaskOrchestrationAsync(
                         new TaskMessage
