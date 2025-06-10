@@ -95,19 +95,16 @@ internal sealed partial class FunctionsOrchestrationContext : TaskOrchestrationC
             SubOrchestrationOptions subOptions;
             if (options is SubOrchestrationOptions subOrchestrationOptions)
             {
-                subOptions = new SubOrchestrationOptions
+                subOptions = new SubOrchestrationOptions(options)
                 {
                     InstanceId = subOrchestrationOptions.InstanceId,
-                    Retry = subOrchestrationOptions.Retry,
                     Version = subOrchestrationOptions.Version?.Version ?? defaultVersion,
                 };
             }
             else
             {
-                subOptions = new SubOrchestrationOptions
+                subOptions = new SubOrchestrationOptions(options ?? new TaskOptions())
                 {
-                    InstanceId = null, // No instance ID specified, so we use the default one.
-                    Retry = options?.Retry,
                     Version = defaultVersion
                 };
             }

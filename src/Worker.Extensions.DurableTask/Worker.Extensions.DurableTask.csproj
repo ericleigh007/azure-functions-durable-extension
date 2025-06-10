@@ -56,7 +56,4 @@
       <PackagePath>content/SBOM</PackagePath>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\durabletask-dotnet\src\Abstractions\Abstractions.csproj" />
-  </ItemGroup>
 </Project>

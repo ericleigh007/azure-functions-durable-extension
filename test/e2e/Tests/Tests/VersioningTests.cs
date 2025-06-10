@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using System;
 using System.Net;
 using Xunit;
 using Xunit.Abstractions;
@@ -53,9 +52,9 @@ public class VersioningTests
     [InlineData("")] // Non-versioned/empty-versioned case.
     [InlineData("1.0")]
     [InlineData("2.0")]
-    public async Task TestVersionedSubOrchestration_OKWithMatchingVersion(string? version)
+    public async Task TestVersionedSubOrchestration_OKWithMatchingVersion(string? subOrchestrationVersion)
     {
-        string queryString = version == null ? string.Empty : $"?version={version}";
+        string queryString = subOrchestrationVersion == null ? string.Empty : $"?subOrchestrationVersion={subOrchestrationVersion}";
         using HttpResponseMessage response = await HttpHelpers.InvokeHttpTrigger("OrchestrationSubVersion_HttpStart", queryString);
 
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -64,9 +63,9 @@ public class VersioningTests
         await DurableHelpers.WaitForOrchestrationStateAsync(statusQueryGetUri, "Completed", 30);
 
         var orchestrationDetails = await DurableHelpers.GetRunningOrchestrationDetailsAsync(statusQueryGetUri);
-        if (version != null)
+        if (subOrchestrationVersion != null)
         {
-            Assert.Equal($"Parent Version: '2.0' | Sub Version: '{version}'", orchestrationDetails.Output);
+            Assert.Equal($"Parent Version: '2.0' | Sub Version: '{subOrchestrationVersion}'", orchestrationDetails.Output);
         }
         else
         {

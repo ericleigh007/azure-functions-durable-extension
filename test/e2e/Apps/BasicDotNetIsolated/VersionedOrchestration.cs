@@ -96,22 +96,22 @@ public static class VersionedOrchestration
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequestData req,
         [DurableClient] DurableTaskClient client,
         FunctionContext executionContext,
-        string? version)
+        string? subOrchestrationVersion)
     {
         ILogger logger = executionContext.GetLogger("OrchestrationSubVersion_HttpStart");
 
         // Function input comes from the request content.
         string instanceId;
-        if (version != null)
+        if (subOrchestrationVersion != null)
         {
-            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(RunWithSubOrchestrator), input: version);
+            instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(RunWithSubOrchestrator), input: subOrchestrationVersion);
         }
         else
         {
             instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(RunWithSubOrchestrator));
         }
 
-        logger.LogInformation("Started orchestration with ID = '{instanceId}' and Version = '{version}'.", instanceId, version);
+        logger.LogInformation("Started orchestration with ID = '{instanceId}' and Version = '{subOrchestrationVersion}'.", instanceId, subOrchestrationVersion);
 
         // Returns an HTTP 202 response with an instance management payload.
         // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
