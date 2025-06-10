@@ -92,6 +92,7 @@ internal sealed partial class FunctionsOrchestrationContext : TaskOrchestrationC
         // If we have a default version, add it to the TaskOptions and call the inner context with it.
         if (this.innerContext.Properties.TryGetValue("defaultVersion", out var propVersion) && propVersion is string defaultVersion)
         {
+            // TODO: Update to copy constructors when available - https://github.com/microsoft/durabletask-dotnet/issues/440
             SubOrchestrationOptions subOptions;
             if (options is SubOrchestrationOptions subOrchestrationOptions)
             {
