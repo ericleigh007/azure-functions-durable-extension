@@ -35,7 +35,13 @@ jobs:
         inputs:
             packageType: 'sdk'
             version: '8.0.x'
-      
+
+      - task: JavaToolInstaller@0
+        inputs:
+          versionSpec: '17'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
+
       # Start by restoring all the dependencies.
       - task: DotNetCoreCLI@2
         displayName: 'dotnet restore'
@@ -66,13 +72,6 @@ jobs:
             vsVersion: "16.0"
             configuration: Release
             msbuildArgs: /p:FileVersionRevision=$(Build.BuildId) /p:ContinuousIntegrationBuild=true # these flags make package build deterministic
-    
-      - template: ci/sign-files.yml@eng
-        parameters:
-            displayName: Sign assemblies
-            folderPath: 'src/WebJobs.Extensions.DurableTask/bin/Release'
-            pattern: '*DurableTask.dll'
-            signType: dll
     
       - template: ci/sign-files.yml@eng
         parameters:
